@@ -11,90 +11,113 @@ public class Ring
     {
         coordinator = max;
         max_processes = max;
-        pid = new ArrayList<Integer>();
-        processes = new boolean[max];
+        pid = new ArrayList<>();
+        processes = new boolean[max_processes];
 
-        for(int i = 0; i < max; i++) 
+        for (int i = 0; i < max_processes; i++) 
         {
             processes[i] = true;
-            System.out.println("P" + (i+1) + " created.");
+            System.out.println("P" + (i + 1) + " created.");
         }
-        System.out.println("P" + (coordinator) + " is the coordinator");
+        System.out.println("P" + coordinator + " is the coordinator.\n");
     }
 
     void displayProcesses() 
     {
-        for(int i = 0; i < max_processes; i++) 
+        System.out.println("\nCurrent Processes:");
+        for (int i = 0; i < max_processes; i++) 
         {
-            if(processes[i]) 
-                System.out.println("P" + (i+1) + " is up.");
+            if (processes[i])
+                System.out.println("P" + (i + 1) + " is UP.");
             else
-                System.out.println("P" + (i+1) + " is down.");
-        }   
-        System.out.println("P" + (coordinator) + " is the coordinator");
+                System.out.println("P" + (i + 1) + " is DOWN.");
+        }
+        System.out.println("Current Coordinator: P" + coordinator + "\n");
     }
 
     void upProcess(int process_id) 
     {
-        if(!processes[process_id-1]) 
+        if (process_id < 1 || process_id > max_processes) 
         {
-            processes[process_id-1] = true;
-            System.out.println("Process P" + (process_id) + " is up.");
+            System.out.println("Invalid process ID.");
+            return;
+        }
+        if (!processes[process_id - 1]) 
+        {
+            processes[process_id - 1] = true;
+            System.out.println("Process P" + process_id + " is now UP.");
         } 
         else 
         {
-            System.out.println("Process P" + (process_id) + " is already up.");
+            System.out.println("Process P" + process_id + " is already UP.");
         }
     }
 
     void downProcess(int process_id) 
     {
-        if(!processes[process_id-1]) 
+        if (process_id < 1 || process_id > max_processes) 
         {
-            System.out.println("Process P" + (process_id) + " is already down.");
+            System.out.println("Invalid process ID.");
+            return;
+        }
+        if (!processes[process_id - 1]) 
+        {
+            System.out.println("Process P" + process_id + " is already DOWN.");
         } 
         else 
         {
-            processes[process_id-1] = false;
-            System.out.println("Process P" + (process_id) + " is down.");
+            processes[process_id - 1] = false;
+            System.out.println("Process P" + process_id + " is now DOWN.");
+
+            if (coordinator == process_id) 
+            {
+                System.out.println("Coordinator was brought DOWN. Election needed.\n");
+            }
         }
     }
 
     void displayArrayList(ArrayList<Integer> pid) 
     {
         System.out.print("[ ");
-        for(Integer x : pid) 
+        for (Integer x : pid) 
         {
             System.out.print(x + " ");
         }
-        System.out.print(" ]\n");
+        System.out.println("]");
     }
 
     void initElection(int process_id) 
     {
-        if(processes[process_id-1]) 
+        if (process_id < 1 || process_id > max_processes) 
         {
-            pid.add(process_id);
-
-            int temp = process_id;
-
-            System.out.print("Process P" + process_id + " sending the following list:- ");
-            displayArrayList(pid);
-
-            while(temp != process_id - 1) 
-            {
-                if(processes[temp]) 
-                {
-                    pid.add(temp+1);
-                    System.out.print("Process P" + (temp + 1) + " sending the following list:- ");
-                    displayArrayList(pid);
-                }
-                temp = (temp + 1) % max_processes;
-            }
-            coordinator = Collections.max(pid);
-            System.out.println("Process P" + process_id + " has declared P" + coordinator + " as the coordinator");
-            pid.clear();
+            System.out.println("Invalid process ID.");
+            return;
         }
+        if (!processes[process_id - 1]) 
+        {
+            System.out.println("Process P" + process_id + " is DOWN. Cannot initiate election.\n");
+            return;
+        }
+
+        pid.clear();
+        int current = process_id - 1;
+        int start = current;
+
+        System.out.println("\nElection initiated by P" + process_id);
+
+        do 
+        {
+            if (processes[current]) 
+            {
+                pid.add(current + 1); // process id (1-based)
+                System.out.print("Process P" + (current + 1) + " sends list: ");
+                displayArrayList(pid);
+            }
+            current = (current + 1) % max_processes;
+        } while (current != start);
+
+        coordinator = Collections.max(pid);
+        System.out.println("Election complete. New Coordinator is P" + coordinator + "\n");
     }
 
     public static void main(String args[]) 
@@ -104,48 +127,67 @@ public class Ring
         int choice = 0;
         Scanner sc = new Scanner(System.in);
 
-        while(true) 
+        while (true) 
         {
-            System.out.println("Ring Algorithm");
-            System.out.println("1. Create processes");
-            System.out.println("2. Display processes");
-            System.out.println("3. Up a process");
-            System.out.println("4. Down a process");
-            System.out.println("5. Run election algorithm");
-            System.out.println("6. Exit Program");
-            System.out.print("Enter your choice:- ");
+            System.out.println("\nRing Election Algorithm Menu:");
+            System.out.println("1. Create Processes");
+            System.out.println("2. Display Processes");
+            System.out.println("3. Up a Process");
+            System.out.println("4. Down a Process");
+            System.out.println("5. Run Election");
+            System.out.println("6. Exit");
+            System.out.print("Enter your choice: ");
             choice = sc.nextInt();
 
-            switch(choice) 
+            switch (choice) 
             {
                 case 1:
-                    System.out.print("Enter the total number of processes:- ");
+                    System.out.print("Enter total number of processes: ");
                     max_processes = sc.nextInt();
                     ring = new Ring(max_processes);
                     break;
                 case 2:
-                    ring.displayProcesses();
+                    if (ring != null)
+                        ring.displayProcesses();
+                    else
+                        System.out.println("Please create processes first.");
                     break;
                 case 3:
-                    System.out.print("Enter the process to up:- ");
-                    process_id = sc.nextInt();
-                    ring.upProcess(process_id);
+                    if (ring != null) 
+                    {
+                        System.out.print("Enter process number to UP: ");
+                        process_id = sc.nextInt();
+                        ring.upProcess(process_id);
+                    } 
+                    else
+                        System.out.println("Please create processes first.");
                     break;
                 case 4:
-                    System.out.print("Enter the process to down:- ");
-                    process_id = sc.nextInt();
-                    ring.downProcess(process_id);
+                    if (ring != null) 
+                    {
+                        System.out.print("Enter process number to DOWN: ");
+                        process_id = sc.nextInt();
+                        ring.downProcess(process_id);
+                    } 
+                    else
+                        System.out.println("Please create processes first.");
                     break;
                 case 5:
-                    System.out.print("Enter the process which will initiate election:- ");
-                    process_id = sc.nextInt();
-                    ring.initElection(process_id);
+                    if (ring != null) 
+                    {
+                        System.out.print("Enter process number to initiate election: ");
+                        process_id = sc.nextInt();
+                        ring.initElection(process_id);
+                    } 
+                    else
+                        System.out.println("Please create processes first.");
                     break;
                 case 6:
+                    System.out.println("Exiting Program.");
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("Error in choice. Please try again.");
+                    System.out.println("Invalid choice. Please try again.");
                     break;
             }
         }
